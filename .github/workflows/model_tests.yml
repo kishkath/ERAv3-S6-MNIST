@@ -17,43 +17,14 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install torch torchvision tqdm numpy matplotlib
+        pip install -r tests/requirements-test.txt
         
-    - name: Run Model Tests
+    - name: Run Tests with Coverage
       run: |
-        python -c "
-import torch
-import torch.nn as nn
-from model import NetArch
-
-def test_parameter_count():
-    model = NetArch()
-    total_params = sum(p.numel() for p in model.parameters())
-    assert total_params <= 20000, f'Model has {total_params} parameters, which exceeds the limit of 20000'
-    print('✓ Parameter count test passed')
-
-def test_batch_norm():
-    model = NetArch()
-    has_batch_norm = any(isinstance(m, nn.BatchNorm2d) for m in model.modules())
-    assert has_batch_norm, 'Model does not use Batch Normalization'
-    print('✓ Batch Normalization test passed')
-
-def test_dropout():
-    model = NetArch()
-    has_dropout = any(isinstance(m, nn.Dropout2d) for m in model.modules())
-    assert has_dropout, 'Model does not use Dropout'
-    print('✓ Dropout test passed')
-
-def test_gap():
-    model = NetArch()
-    has_gap = any(isinstance(m, nn.AvgPool2d) for m in model.modules())
-    assert has_gap, 'Model does not use Global Average Pooling'
-    print('✓ GAP test passed')
-
-if __name__ == '__main__':
-    test_parameter_count()
-    test_batch_norm()
-    test_dropout()
-    test_gap()
-    print('All tests passed successfully!')
-        " 
+        pytest tests/ -v --cov=model --cov-report=term-missing
+        
+    - name: Upload Coverage Report
+      uses: actions/upload-artifact@v2
+      with:
+        name: coverage-report
+        path: .coverage
